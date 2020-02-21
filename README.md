@@ -9,10 +9,23 @@ In implementation of ERE the authors used and older version of SAC, whereas this
 
 ## How to use:
 
+*Run regular SAC:* `python SAC.py -env Pendulum-v0 -ep 200`
+
+*Run SAC + PER:* `python SAC_PER.py -env Pendulum-v0 -ep 200`
+
+*Run SAC + ERE + PER:* `python SAC_ERE_PER.py -env Pendulum-v0 -ep`
+
+For further input arguments and hyperparameter check the code.
+
+
 ## Results 
+It can be seen that the extensions not always bring improvements to the algorithm. This is depending on the environment and from environment to environment different - as the authors mention in their paper (ERE).
 
 ![Pendulum](imgs/SAC_PENDULUM.jpg)
 
+![LLC](imgs/SAC_LLC.jpg)
+
+- All runs without hyperparameter-tuning
 
 ## Author
 - Sebastian Dittert
