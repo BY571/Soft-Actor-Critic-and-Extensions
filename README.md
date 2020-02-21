@@ -5,7 +5,7 @@ This repository includes the newest Soft-Actor-Critic version ([Paper 2019](http
 - **P**rioritized **E**xperience **R**eplay ([PER](https://arxiv.org/abs/1511.05952))
 - **E**mphasizing **R**ecent **E**xperience without Forgetting the Past([ERE](https://arxiv.org/abs/1906.04009))
 
-In implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
+In the paper implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
 
 ## How to use:
 
