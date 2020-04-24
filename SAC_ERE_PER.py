@@ -347,7 +347,7 @@ class PrioritizedReplay(object):
     
     def update_priorities(self, batch_indices, batch_priorities):
         for idx, prio in zip(batch_indices, batch_priorities):
-            self.priorities[idx] = prio 
+            self.priorities[idx] = abs(prio)
 
     def __len__(self):
         return len(self.buffer)
