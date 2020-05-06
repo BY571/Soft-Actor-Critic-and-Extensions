@@ -9,11 +9,11 @@ In the paper implementation of ERE the authors used and older version of SAC, wh
 
 ## How to use:
 
-*Run regular SAC:* `python SAC.py -env Pendulum-v0 -ep 200`
+*Run regular SAC:* `python SAC.py -env Pendulum-v0 -ep 200 -info sac`
 
-*Run SAC + PER:* `python SAC_PER.py -env Pendulum-v0 -ep 200`
+*Run SAC + PER:* `python SAC_PER.py -env Pendulum-v0 -ep 200 -info sac_per`
 
-*Run SAC + ERE + PER:* `python SAC_ERE_PER.py -env Pendulum-v0 -frames 20000`
+*Run SAC + ERE + PER:* `python SAC_ERE_PER.py -env Pendulum-v0 -frames 20000 -info sac_per_ere`
 
 For further input arguments and hyperparameter check the code.
 

@@ -184,7 +184,7 @@ class Agent():
             self.learn(step, experiences, GAMMA)
             
     
-    def act(self, state, add_noise=True):
+    def act(self, state):
         """Returns actions for given state as per current policy."""
         state = torch.from_numpy(state).float().to(device)
         action = self.actor_local.get_action(state).detach()
@@ -256,6 +256,8 @@ class Agent():
     
                 actor_loss = (alpha * log_pis.squeeze(0).cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs ).mean()
             else:
+                
+                actions_pred, log_pis = self.actor_local.evaluate(states)
                 if self._action_prior == "normal":
                     policy_prior = MultivariateNormal(loc=torch.zeros(self.action_size), scale_tril=torch.ones(self.action_size).unsqueeze(0))
                     policy_prior_log_probs = policy_prior.log_prob(actions_pred)
