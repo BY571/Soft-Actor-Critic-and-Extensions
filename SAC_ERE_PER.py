@@ -211,15 +211,16 @@ class Agent():
 
         # Compute Q targets for current states (y_i)
         Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
-        TD_L1 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target1_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
-        TD_L2 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target2_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+        #TD_L1 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target1_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+        #TD_L2 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target2_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
         Q_2 = self.critic2(states, actions).cpu()
-        critic1_loss = (0.5*F.mse_loss(Q_1, Q_targets.detach(),reduction="none")*weights).mean()
-        critic2_loss = (0.5*F.mse_loss(Q_2, Q_targets.detach(),reduction="none")*weights).mean()
-
-        prios = abs(((TD_L1 + TD_L2)/2.0 + 1e-5).squeeze())
+        td_error1 = F.mse_loss(Q_1, Q_targets.detach(),reduction="none")*weights
+        td_error2 = F.mse_loss(Q_2, Q_targets.detach(),reduction="none")*weights
+        critic1_loss = 0.5* td_error1.mean()
+        critic2_loss = 0.5* td_error2.mean()
+        prios = abs(((td_error1 + td_error2)/2.0 + 1e-5).squeeze())
 
         # Update critics
         # critic 1
