@@ -10,7 +10,7 @@ from torch.nn.utils import clip_grad_norm_
 import torch.optim as optim
 import gym.spaces
 import argparse
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 import time
 
 
@@ -208,15 +208,14 @@ class Agent():
 
         # Compute Q targets for current states (y_i)
         Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
-        #TD_L1 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target1_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
-        #TD_L2 = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target2_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
         Q_2 = self.critic2(states, actions).cpu()
-        td_error1 = F.mse_loss(Q_1, Q_targets.detach(),reduction="none")*weights
-        td_error2 = F.mse_loss(Q_2, Q_targets.detach(),reduction="none")*weights
-        critic1_loss = 0.5* td_error1.mean()
-        critic2_loss = 0.5* td_error2.mean()
+        td_error1 = Q_targets.detach()-Q_1#,reduction="none"
+        td_error2 = Q_targets.detach()-Q_2
+        critic1_loss = 0.5* (td_error1.pow(2)*weights).mean()
+        critic2_loss = 0.5* (td_error2.pow(2)*weights).mean()
         prios = abs(((td_error1 + td_error2)/2.0 + 1e-5).squeeze())
         
         # Update critics
@@ -404,11 +403,11 @@ def play():
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-env", type=str, default="Pendulum-v0", help="Name of the Environment")
-parser.add_argument("-ep", type=int, default=100, help="Number of Episodes to train, default = 500")
+parser.add_argument("-ep", type=int, default=100, help="Number of Episodes to train, default = 100")
 parser.add_argument("-bs", "--buffer_size", type=int, default=int(1e6), help="Size of the Replay buffer, default= 1e6")
-parser.add_argument("-bsize", "--batch_size", type=int, default=256, help="Batch size for the optimization process, default = 128")
+parser.add_argument("-bsize", "--batch_size", type=int, default=256, help="Batch size for the optimization process, default = 256")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
-parser.add_argument("-lr", type=float, default=5e-4, help="Learning Rate")
+parser.add_argument("-lr", type=float, default=5e-4, help="Learning Rate, default = 5e-4")
 parser.add_argument("-g", type=float, default=0.99, help="discount factor gamma, default = 0.99")
 parser.add_argument("-wd", type=float, default=0, help="Weight decay, default = 0")
 parser.add_argument("-ls", "--layer_size", type=int, default=256, help="Number of nodes per neural network layer, default = 256")

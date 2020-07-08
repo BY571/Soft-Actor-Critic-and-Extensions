@@ -10,7 +10,7 @@ from torch.nn.utils import clip_grad_norm_
 import torch.optim as optim
 import gym.spaces
 import argparse
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 import time
 
 
@@ -216,10 +216,10 @@ class Agent():
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
         Q_2 = self.critic2(states, actions).cpu()
-        td_error1 = F.mse_loss(Q_1, Q_targets.detach(),reduction="none")*weights
-        td_error2 = F.mse_loss(Q_2, Q_targets.detach(),reduction="none")*weights
-        critic1_loss = 0.5* td_error1.mean()
-        critic2_loss = 0.5* td_error2.mean()
+        td_error1 = Q_targets.detach()-Q_1#,reduction="none"
+        td_error2 = Q_targets.detach()-Q_2
+        critic1_loss = 0.5* (td_error1.pow(2)*weights).mean()
+        critic2_loss = 0.5* (td_error2.pow(2)*weights).mean()
         prios = abs(((td_error1 + td_error2)/2.0 + 1e-5).squeeze())
 
         # Update critics
@@ -354,7 +354,7 @@ class PrioritizedReplay(object):
         return len(self.buffer)
 
 
-def SAC(n_interactions=3e6, print_every=10):
+def SAC(n_interactions, print_every=10):
     
     scores_deque = deque(maxlen=args.print_every)
     state = env.reset()
@@ -365,9 +365,11 @@ def SAC(n_interactions=3e6, print_every=10):
     episodes = 0
     max_ep_len = 500 # original = 1000
     c_k_min = 2500 # original = 5000
-
-    for t in range(1, int(n_interactions)+1):
+    t = 0   
+    #for t in range(1, int(n_interactions)+1):
+    while t < n_interactions:
         for i in range(max_ep_len):
+            t +=1 
             action = agent.act(state)
             action_v = action[0].numpy()
             action_v = np.clip(action_v*action_high, action_low, action_high)
@@ -392,7 +394,8 @@ def SAC(n_interactions=3e6, print_every=10):
                 state = env.reset()
                 episode_K = 0
                 score = 0
-            
+                break
+           
     torch.save(agent.actor_local.state_dict(), args.info + ".pt")
         
         
@@ -419,11 +422,11 @@ def play():
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-env", type=str, default="Pendulum-v0", help="Name of the Environment")
-parser.add_argument("-frames", type=int, default=20000, help="Number of frames to train, default = 4e5")
+parser.add_argument("-frames", type=int, default=20000, help="Number of frames to train, default = 20000")
 parser.add_argument("-bs", "--buffer_size", type=int, default=int(1e6), help="Size of the Replay buffer, default= 1e6")
-parser.add_argument("-bsize", "--batch_size", type=int, default=256, help="Batch size for the optimization process, default = 128")
+parser.add_argument("-bsize", "--batch_size", type=int, default=256, help="Batch size for the optimization process, default = 256")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
-parser.add_argument("-lr", type=float, default=5e-4, help="Learning Rate")
+parser.add_argument("-lr", type=float, default=5e-4, help="Learning Rate, default 5e-4")
 parser.add_argument("-g", type=float, default=0.99, help="discount factor gamma, default = 0.99")
 parser.add_argument("-wd", type=float, default=0, help="Weight decay, default = 0")
 parser.add_argument("-ls", "--layer_size", type=int, default=256, help="Number of nodes per neural network layer, default = 256")
@@ -472,7 +475,7 @@ if __name__ == "__main__":
         agent.actor_local.load_state_dict(torch.load(saved_model))
         play()
     else:    
-        SAC(n_interactions=args.    , print_every=args.print_every)
+        SAC(n_interactions=args.frames, print_every=args.print_every)
 
     end_time = time.time()
     env.close()
