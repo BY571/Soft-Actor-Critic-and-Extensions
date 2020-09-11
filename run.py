@@ -82,9 +82,9 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
             scores_window.append(score)       # save most recent score
             scores.append(score)              # save most recent score
             writer.add_scalar("Average100", np.mean(scores_window), frame*worker)
-            print('\rEpisode {}\tFrame {} \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
-            if i_episode % 100 == 0:
-                print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
+            print('\rEpisode {}\tFrame {} \tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, np.mean(scores_window)), end="")
+            #if i_episode % 100 == 0:
+            #    print('\rEpisode {}\tFrame \tReward: {}\tAverage100 Score: {:.2f}'.format(i_episode*worker, frame*worker, round(eval_reward,2), np.mean(scores_window)), end="", flush=True)
             i_episode +=1 
             state = envs.reset()
             score = 0

@@ -143,9 +143,9 @@ class Agent():
         if not self.munchausen:
             if self.FIXED_ALPHA == None:
                 # Compute Q targets for current states (y_i)
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.squeeze(0).cpu()))
+                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
             else:
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.squeeze(0).cpu()))
+                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
         else:
             mu_m, log_std_m = self.actor_local(states)
             std = log_std_m.exp()
@@ -165,6 +165,7 @@ class Agent():
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
         Q_2 = self.critic2(states, actions).cpu()
+        assert Q_1.shape == Q_targets.shape, "Exp: {}  -- Target: {}".format(Q_1.shape, Q_targets.shape)
         critic1_loss = 0.5*F.mse_loss(Q_1, Q_targets.detach())
         critic2_loss = 0.5*F.mse_loss(Q_2, Q_targets.detach())
         # Update critics
@@ -237,12 +238,27 @@ class Agent():
             Q_target1_next = self.critic1_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
             Q_target2_next = self.critic2_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
 
-            # take the mean of both critics for updating
-            Q_target_next = torch.min(Q_target1_next, Q_target2_next).cpu()
-
-            # Compute Q targets for current states (y_i)
-            Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
-
+            Q_target_next = torch.min(Q_target1_next, Q_target2_next)
+            if not self.munchausen:
+                if self.FIXED_ALPHA == None:
+                    # Compute Q targets for current states (y_i)
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                else:
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
+            else:
+                mu_m, log_std_m = self.actor_local(states)
+                std = log_std_m.exp()
+                dist = Normal(mu_m, std)
+                log_pi_a = dist.log_prob(actions).cpu()
+                assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
+                assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
+                if self.FIXED_ALPHA == None:
+                    # Compute Q targets for current states (y_i)
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.squeeze(0).cpu()))
+                else:
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.squeeze(0).cpu()))
+            
             # Compute critic loss
             Q_1 = self.critic1(states, actions).cpu()
             Q_2 = self.critic2(states, actions).cpu()
