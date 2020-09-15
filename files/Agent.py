@@ -150,15 +150,19 @@ class Agent():
             mu_m, log_std_m = self.actor_local(states)
             std = log_std_m.exp()
             dist = Normal(mu_m, std)
-            log_pi_a = dist.log_prob(actions).cpu()
+            log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
+            #m_Q = self.critic1(states, actions).cpu()  
+            #logsum = torch.logsumexp(\
+            #    (m_Q /self.m_tau).detach(), 1).unsqueeze(-1) #logsum trick
+            #log_pi_a = m_Q - self.m_tau*logsum 
             assert log_pi_a.shape == (self.BATCH_SIZE, 1)
-            munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
+            munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0))
             assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
             if self.FIXED_ALPHA == None:
                 # Compute Q targets for current states (y_i)
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.squeeze(0).cpu()))
+                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
             else:
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.squeeze(0).cpu()))
+                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
 
 
 
@@ -249,7 +253,7 @@ class Agent():
                 mu_m, log_std_m = self.actor_local(states)
                 std = log_std_m.exp()
                 dist = Normal(mu_m, std)
-                log_pi_a = dist.log_prob(actions).cpu()
+                log_pi_a = dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
                 assert log_pi_a.shape == (self.BATCH_SIZE, 1)
                 munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
                 assert munchausen_reward.shape == (self.BATCH_SIZE, 1)

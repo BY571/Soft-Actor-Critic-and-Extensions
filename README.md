@@ -76,7 +76,7 @@ It can be seen that the extensions not always bring improvements to the algorith
 ## Comparison SAC and M-SAC
 
 ![munchausenRL](imgs/SAC_MSAC_Pendulum_.png)
-
+![munchausenRL2](imgs/SAC_MSAC_LL.png)
 
 ## Help and issues:
 Im open for feedback, found bugs, improvements or anything. Just leave me a message or contact me.
