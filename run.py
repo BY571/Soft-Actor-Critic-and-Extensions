@@ -94,13 +94,13 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
 
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("-env", type=str,default="Pendulum-v2", help="Environment name, default = Pendulum-v0")
+parser.add_argument("-env", type=str,default="Pendulum-v0", help="Environment name, default = Pendulum-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emphasizing Recent Experience to the agent if set to 1, default = 0")
 parser.add_argument("-info", type=str, help="Information or name of the run")
-parser.add_argument("-frames", type=int, default=100000, help="The amount of training interactions with the environment, default is 100000")
-parser.add_argument("-eval_every", type=int, default=5000, help="Number of interactions after which the evaluation runs are performed, default = 5000")
+parser.add_argument("-frames", type=int, default=10000, help="The amount of training interactions with the environment, default is 100000")
+parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 5000")
 parser.add_argument("-eval_runs", type=int, default=1, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
 parser.add_argument("-lr_a", type=float, default=5e-4, help="Actor learning rate of adapting the network weights, default is 5e-4")
