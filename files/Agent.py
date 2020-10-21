@@ -148,39 +148,40 @@ class Agent():
 
         # ---------------------------- update critic ---------------------------- #
         # Get predicted next-state actions and Q values from target models
-        next_action, log_pis_next = self.actor_local.evaluate(next_states)
+        with torch.no_grad():
+            next_action, log_pis_next = self.actor_local.evaluate(next_states)
 
-        Q_target1_next = self.critic1_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
-        Q_target2_next = self.critic2_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
+            Q_target1_next = self.critic1_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
+            Q_target2_next = self.critic2_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
 
-        # take the mean of both critics for updating
-        Q_target_next = torch.min(Q_target1_next, Q_target2_next)
-        if not self.munchausen:
-            if self.FIXED_ALPHA == None:
-                # Compute Q targets for current states (y_i)
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
+            # take the mean of both critics for updating
+            Q_target_next = torch.min(Q_target1_next, Q_target2_next)
+            if not self.munchausen:
+                if self.FIXED_ALPHA == None:
+                    # Compute Q targets for current states (y_i)
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
+                else:
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
             else:
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
-        else:
-            mu_m, log_std_m = self.actor_local(states)
-            std = log_std_m.exp()
-            dist = Normal(mu_m, std)
-            log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-            assert log_pi_a.shape == (self.BATCH_SIZE, 1)
-            munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0))
-            assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
-            if self.FIXED_ALPHA == None:
-                # Compute Q targets for current states (y_i)
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
-            else:
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
+                mu_m, log_std_m = self.actor_local(states)
+                std = log_std_m.exp()
+                dist = Normal(mu_m, std)
+                log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
+                assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0))
+                assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
+                if self.FIXED_ALPHA == None:
+                    # Compute Q targets for current states (y_i)
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
+                else:
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
 
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
         Q_2 = self.critic2(states, actions).cpu()
         assert Q_1.shape == Q_targets.shape, "Exp: {}  -- Target: {}".format(Q_1.shape, Q_targets.shape)
-        critic1_loss = 0.5*F.mse_loss(Q_1, Q_targets.detach())
-        critic2_loss = 0.5*F.mse_loss(Q_2, Q_targets.detach())
+        critic1_loss = 0.5*F.mse_loss(Q_1, Q_targets)
+        critic2_loss = 0.5*F.mse_loss(Q_2, Q_targets)
         # Update critics
         # critic 1
         self.critic1_optimizer.zero_grad()
@@ -209,7 +210,10 @@ class Agent():
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
 
-                actor_loss = (alpha * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs ).mean()
+                q1 = self.critic1(states, actions_pred.squeeze(0))   
+                q2 = self.critic2(states, actions_pred.squeeze(0))
+                min_Q = torch.min(q1,q2).cpu()
+                actor_loss = (alpha * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
                 
             else:
                 
@@ -219,8 +223,11 @@ class Agent():
                     policy_prior_log_probs = policy_prior.log_prob(actions_pred)
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
-    
-                actor_loss = (self.FIXED_ALPHA * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu()- policy_prior_log_probs ).mean()
+                
+                q1 = self.critic1(states, actions_pred.squeeze(0))   
+                q2 = self.critic2(states, actions_pred.squeeze(0))
+                min_Q = torch.min(q1,q2).cpu()
+                actor_loss = (self.FIXED_ALPHA * log_pis.cpu() - min_Q - policy_prior_log_probs ).mean()
             # Minimize the loss
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
@@ -247,37 +254,37 @@ class Agent():
 
             # ---------------------------- update critic ---------------------------- #
             # Get predicted next-state actions and Q values from target models
-            next_action, log_pis_next = self.actor_local.evaluate(next_states)
+            with torch.no_grad():
+                next_action, log_pis_next = self.actor_local.evaluate(next_states)
+                Q_target1_next = self.critic1_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
+                Q_target2_next = self.critic2_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
 
-            Q_target1_next = self.critic1_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
-            Q_target2_next = self.critic2_target(next_states.to(self.device), next_action.squeeze(0).to(self.device))
-
-            Q_target_next = torch.min(Q_target1_next, Q_target2_next)
-            if not self.munchausen:
-                if self.FIXED_ALPHA == None:
-                    # Compute Q targets for current states (y_i)
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
+                Q_target_next = torch.min(Q_target1_next, Q_target2_next)
+                if not self.munchausen:
+                    if self.FIXED_ALPHA == None:
+                        # Compute Q targets for current states (y_i)
+                        Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
+                    else:
+                        Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu()))
                 else:
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu()))
-            else:
-                mu_m, log_std_m = self.actor_local(states)
-                std = log_std_m.exp()
-                dist = Normal(mu_m, std)
-                log_pi_a = dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-                assert log_pi_a.shape == (self.BATCH_SIZE, 1)
-                munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
-                assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
-                if self.FIXED_ALPHA == None:
-                    # Compute Q targets for current states (y_i)
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
-                else:
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu()))
-            
+                    mu_m, log_std_m = self.actor_local(states)
+                    std = log_std_m.exp()
+                    dist = Normal(mu_m, std)
+                    log_pi_a = dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
+                    assert log_pi_a.shape == (self.BATCH_SIZE, 1)
+                    munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(self.m_tau*log_pi_a, min=self.lo, max=0))
+                    assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
+                    if self.FIXED_ALPHA == None:
+                        # Compute Q targets for current states (y_i)
+                        Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
+                    else:
+                        Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next .cpu()))
+                
             # Compute critic loss
             Q_1 = self.critic1(states, actions).cpu()
             Q_2 = self.critic2(states, actions).cpu()
-            td_error1 = Q_targets.detach()-Q_1
-            td_error2 = Q_targets.detach()-Q_2
+            td_error1 = Q_targets-Q_1
+            td_error2 = Q_targets-Q_2
             critic1_loss = 0.5* (td_error1.pow(2)*weights).mean()
             critic2_loss = 0.5* (td_error2.pow(2)*weights).mean()
             prios = abs(((td_error1 + td_error2)/2.0 + 1e-5).squeeze())
@@ -311,8 +318,11 @@ class Agent():
                     policy_prior_log_probs = policy_prior.log_prob(actions_pred)
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
-        
-                actor_loss = ((alpha * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs )*weights).mean()
+                
+                q1 = self.critic1(states, actions_pred.squeeze(0))   
+                q2 = self.critic2(states, actions_pred.squeeze(0))
+                min_Q = torch.min(q1,q2).cpu()
+                actor_loss = ((alpha * log_pis.cpu() - min_Q - policy_prior_log_probs )*weights).mean()
 
                 # Minimize the loss
                 self.actor_optimizer.zero_grad()
