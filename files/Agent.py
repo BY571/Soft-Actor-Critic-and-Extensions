@@ -158,9 +158,9 @@ class Agent():
         if not self.munchausen:
             if self.FIXED_ALPHA == None:
                 # Compute Q targets for current states (y_i)
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
             else:
-                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
         else:
             mu_m, log_std_m = self.actor_local(states)
             std = log_std_m.exp()
@@ -171,9 +171,9 @@ class Agent():
             assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
             if self.FIXED_ALPHA == None:
                 # Compute Q targets for current states (y_i)
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
             else:
-                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
 
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
@@ -208,8 +208,9 @@ class Agent():
                     policy_prior_log_probs = policy_prior.log_prob(actions_pred)
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
-    
-                actor_loss = (alpha * log_pis.squeeze(0).cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs ).mean()
+
+                actor_loss = (alpha * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs ).mean()
+                
             else:
                 
                 actions_pred, log_pis = self.actor_local.evaluate(states)
@@ -219,7 +220,7 @@ class Agent():
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
     
-                actor_loss = (self.FIXED_ALPHA * log_pis.squeeze(0).cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu()- policy_prior_log_probs ).mean()
+                actor_loss = (self.FIXED_ALPHA * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu()- policy_prior_log_probs ).mean()
             # Minimize the loss
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
@@ -255,9 +256,9 @@ class Agent():
             if not self.munchausen:
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
                 else:
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
+                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu()))
             else:
                 mu_m, log_std_m = self.actor_local(states)
                 std = log_std_m.exp()
@@ -268,9 +269,9 @@ class Agent():
                 assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.squeeze(0).cpu()))
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu()))
                 else:
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.squeeze(0).cpu()))
+                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu()))
             
             # Compute critic loss
             Q_1 = self.critic1(states, actions).cpu()
@@ -311,7 +312,7 @@ class Agent():
                 elif self._action_prior == "uniform":
                     policy_prior_log_probs = 0.0
         
-                actor_loss = ((alpha * log_pis.squeeze(0).cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs )*weights).mean()
+                actor_loss = ((alpha * log_pis.cpu() - self.critic1(states, actions_pred.squeeze(0)).cpu() - policy_prior_log_probs )*weights).mean()
 
                 # Minimize the loss
                 self.actor_optimizer.zero_grad()
