@@ -99,8 +99,9 @@ parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Pri
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emphasizing Recent Experience to the agent if set to 1, default = 0")
 parser.add_argument("-info", type=str, help="Information or name of the run")
+parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
 parser.add_argument("-frames", type=int, default=10000, help="The amount of training interactions with the environment, default is 100000")
-parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 5000")
+parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 1000")
 parser.add_argument("-eval_runs", type=int, default=1, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
 parser.add_argument("-lr_a", type=float, default=5e-4, help="Actor learning rate of adapting the network weights, default is 5e-4")
@@ -109,7 +110,7 @@ parser.add_argument("-a", "--alpha", type=float, help="entropy alpha value, if n
 parser.add_argument("-layer_size", type=int, default=256, help="Number of nodes per neural network layer, default is 256")
 parser.add_argument("-repm", "--replay_memory", type=int, default=int(1e6), help="Size of the Replay memory, default is 1e6")
 parser.add_argument("-bs", "--batch_size", type=int, default=256, help="Batch size, default is 256")
-parser.add_argument("-t", "--tau", type=float, default=1e-3, help="Softupdate factor tau, default is 1e-3")
+parser.add_argument("-t", "--tau", type=float, default=1e-2, help="Softupdate factor tau, default is 1e-2")
 parser.add_argument("-g", "--gamma", type=float, default=0.99, help="discount factor gamma, default is 0.99")
 parser.add_argument("--saved_model", type=str, default=None, help="Load a saved model to perform a test run!")
 parser.add_argument("-w", "--worker", type=int, default=1, help="Number of parallel worker, default = 1")
@@ -130,6 +131,7 @@ if __name__ == "__main__":
     FIXED_ALPHA = args.alpha
     saved_model = args.saved_model
     ERE = args.ere
+    D2RL = args.d2rl
 
     writer = SummaryWriter("runs/"+args.info)
     envs = MultiPro.SubprocVecEnv([lambda: gym.make(args.env) for i in range(args.worker)])
@@ -147,7 +149,7 @@ if __name__ == "__main__":
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
     agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, munchausen=args.munchausen,
-                 random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
+                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
                  FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform") #"normal"
     
     t0 = time.time()

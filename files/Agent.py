@@ -1,5 +1,5 @@
 from .ReplayBuffers import ReplayBuffer, PrioritizedReplay
-from .networks import Actor, Critic
+from .networks import Actor, Critic, DeepActor, DeepCritic
 import torch.optim as optim
 import random
 from torch.distributions import MultivariateNormal, Normal
@@ -16,6 +16,7 @@ class Agent():
                         per,
                         ere,
                         munchausen,
+                        D2RL,
                         random_seed,
                         hidden_size,
                         BATCH_SIZE,
@@ -44,6 +45,7 @@ class Agent():
         self.per = per
         self.ere = ere
         self.munchausen = munchausen
+        self.D2RL = D2RL
         self.m_alpha = 0.9
         self.m_tau = 0.03
         self.lo = -1
@@ -61,18 +63,31 @@ class Agent():
         self._action_prior = action_prior
         
         # Actor Network 
-        self.actor_local = Actor(state_size, action_size, random_seed, device, hidden_size).to(device)
+        if self.D2RL:
+            self.actor_local = DeepActor(state_size, action_size, random_seed, device, hidden_size).to(device)
+        else:
+            self.actor_local = Actor(state_size, action_size, random_seed, device, hidden_size).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=lr_a)     
         
         # Critic Network (w/ Target Network)
-        self.critic1 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
-        self.critic2 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
-        
-        self.critic1_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
-        self.critic1_target.load_state_dict(self.critic1.state_dict())
+        if self.D2RL:
+            self.critic1 = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic2 = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            
+            self.critic1_target = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic1_target.load_state_dict(self.critic1.state_dict())
 
-        self.critic2_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
-        self.critic2_target.load_state_dict(self.critic2.state_dict())
+            self.critic2_target = DeepCritic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic2_target.load_state_dict(self.critic2.state_dict())
+        else:
+            self.critic1 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic2 = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            
+            self.critic1_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic1_target.load_state_dict(self.critic1.state_dict())
+
+            self.critic2_target = Critic(state_size, action_size, random_seed, device, hidden_size).to(device)
+            self.critic2_target.load_state_dict(self.critic2.state_dict())
 
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=lr_c, weight_decay=0)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=lr_c, weight_decay=0) 
@@ -151,10 +166,6 @@ class Agent():
             std = log_std_m.exp()
             dist = Normal(mu_m, std)
             log_pi_a = self.m_tau*dist.log_prob(actions).mean(1).unsqueeze(1).cpu()
-            #m_Q = self.critic1(states, actions).cpu()  
-            #logsum = torch.logsumexp(\
-            #    (m_Q /self.m_tau).detach(), 1).unsqueeze(-1) #logsum trick
-            #log_pi_a = m_Q - self.m_tau*logsum 
             assert log_pi_a.shape == (self.BATCH_SIZE, 1)
             munchausen_reward = (rewards.cpu() + self.m_alpha*torch.clamp(log_pi_a, min=self.lo, max=0))
             assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
@@ -163,8 +174,6 @@ class Agent():
                 Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.mean(1).unsqueeze(1).cpu()))
             else:
                 Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.mean(1).unsqueeze(1).cpu()))
-
-
 
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()
@@ -313,8 +322,8 @@ class Agent():
                 self.soft_update(self.critic1, self.critic1_target)
                 self.soft_update(self.critic2, self.critic2_target)
 
-    
-    def soft_update(self, local_model, target_model):
+
+    def soft_update(self, local_model , target_model):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
         Params
@@ -325,3 +334,4 @@ class Agent():
         """
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(self.tau*local_param.data + (1.0-self.tau)*target_param.data)
+
