@@ -75,6 +75,10 @@ It can be seen that the extensions not always bring improvements to the algorith
 
 - All runs without hyperparameter-tuning
 
+## Comparison SAC and D2RL-SAC
+![D2RL-Pendulum](imgs/Base_D2RL_SAC.png)
+
+
 ## Comparison SAC and M-SAC
 
 ![munchausenRL](imgs/SAC_MSAC_Pendulum_.png)
