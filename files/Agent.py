@@ -96,11 +96,11 @@ class Agent():
 
         # Replay memory
         if self.per == 1:
-            self.memory = PrioritizedReplay(BUFFER_SIZE, self.BATCH_SIZE, self.device,  seed=random_seed, gamma=self.GAMMA, ere=ere, parallel_env=worker)
+            self.memory = PrioritizedReplay(BUFFER_SIZE, self.BATCH_SIZE, self.device,  seed=random_seed, gamma=self.GAMMA, ere=ere)
             self.learn = self.learn_per
         else:
             self.per = 0
-            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, ere=ere, parallel_env=worker)
+            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, ere=ere)
             self.learn = self.learn_
         print("Using PER: {}".format(self.per))        
         print("Using Munchausen RL: {}".format(self.munchausen))

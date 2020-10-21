@@ -168,10 +168,10 @@ class DeepActor(nn.Module):
     def evaluate(self, state, epsilon=1e-6):
         mu, log_std = self.forward(state)
         std = log_std.exp()
-        dist = Normal(0, 1)
-        e = dist.sample().to(self.device)
-        action = torch.tanh(mu + e * std)
-        log_prob = Normal(mu, std).log_prob(mu + e * std) - torch.log(1 - action.pow(2) + epsilon)
+        dist = Normal(mu, std)
+        e = dist.rsample().to(self.device)
+        action = torch.tanh(e)
+        log_prob = (dist.log_prob(e) - torch.log(1 - action.pow(2) + epsilon)).sum(1, keepdim=True)
 
         return action, log_prob
         
@@ -184,10 +184,10 @@ class DeepActor(nn.Module):
         #state = torch.FloatTensor(state).to(device) #.unsqzeeze(0)
         mu, log_std = self.forward(state)
         std = log_std.exp()
-        dist = Normal(0, 1)
-        e      = dist.sample().to(self.device)
-        action = torch.tanh(mu + e * std).cpu()
-        return action.detach().cpu().numpy()
+        dist = Normal(mu, std)
+        e = dist.rsample().to(self.device)
+        action = torch.tanh(e)
+        return action.detach().cpu()
 
 
 class DeepCritic(nn.Module):

@@ -7,7 +7,7 @@ from collections import namedtuple, deque
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""
 
-    def __init__(self, buffer_size, batch_size, device, seed, gamma, ere=False,  parallel_env=4):
+    def __init__(self, buffer_size, batch_size, device, seed, gamma, ere=False):
         """Initialize a ReplayBuffer object.
         Params
         ======
@@ -21,8 +21,6 @@ class ReplayBuffer:
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
         self.gamma = gamma
-        self.parallel_env = parallel_env
-        self.n_step_buffer = [deque(maxlen=1) for i in range(parallel_env)]
         self.iter_ = 0
         self.ere = ere
     
@@ -54,7 +52,7 @@ class PrioritizedReplay(object):
     """
     Proportional Prioritization
     """
-    def __init__(self, capacity, batch_size, device, seed, gamma=0.99, alpha=0.6, beta_start = 0.4, beta_frames=100000, ere=False, parallel_env=4):
+    def __init__(self, capacity, batch_size, device, seed, gamma=0.99, alpha=0.6, beta_start = 0.4, beta_frames=100000, ere=False):
         self.alpha = alpha
         self.beta_start = beta_start
         self.beta_frames = beta_frames
@@ -66,8 +64,6 @@ class PrioritizedReplay(object):
         self.pos        = 0
         self.priorities = np.zeros((capacity,), dtype=np.float32)
         self.seed = np.random.seed(seed)
-        self.parallel_env = parallel_env
-        self.n_step_buffer = [deque(maxlen=1) for i in range(parallel_env)]
         self.iter_ = 0
         self.gamma = gamma
         self.ere = ere
