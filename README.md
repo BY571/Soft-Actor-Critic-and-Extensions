@@ -5,6 +5,7 @@ This repository includes the newest Soft-Actor-Critic version ([Paper 2019](http
 - **P**rioritized **E**xperience **R**eplay ([PER](https://arxiv.org/abs/1511.05952))
 - **E**mphasizing **R**ecent **E**xperience without Forgetting the Past([ERE](https://arxiv.org/abs/1906.04009))
 - Munchausen Reinforcement Learning [Paper](https://arxiv.org/abs/2007.14430) 
+- D2RL: DEEP DENSE ARCHITECTURES IN REINFORCEMENT LEARNING [Paper](https://arxiv.org/pdf/2010.09163.pdf)
 - Parallel Environments
 
 In the paper implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
@@ -31,6 +32,7 @@ To see the options:
 -env, Environment name, default = Pendulum-v0
 -per, Adding Priorizied Experience Replay to the agent if set to 1, default = 0
 -munchausen, Adding Munchausen RL to the agent if set to 1, default = 0
+-d2rl, Uses Deep Actor and Deep Critic Networks if set to 1, default = 0
 -ere, Adding Emphasizing Recent Experience to the agent if set to 1, default = 0
 -info, Information or name of the run
 -frames, The amount of training interactions with the environment, default is 100000
