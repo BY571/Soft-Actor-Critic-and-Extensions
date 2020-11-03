@@ -11,7 +11,7 @@ This repository includes the newest Soft-Actor-Critic version ([Paper 2019](http
 In the paper implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
 
 #### TODO:
-- add IQN Critic [ ]
+- add IQN Critic [   ]
 
 #### Dependencies
 Trained and tested on:
