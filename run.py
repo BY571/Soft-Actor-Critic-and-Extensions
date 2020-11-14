@@ -97,6 +97,7 @@ parser = argparse.ArgumentParser(description="")
 parser.add_argument("-env", type=str,default="Pendulum-v0", help="Environment name, default = Pendulum-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
+parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
 parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emphasizing Recent Experience to the agent if set to 1, default = 0")
 parser.add_argument("-info", type=str, help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     action_low = eval_env.action_space.low[0]
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
-    agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, munchausen=args.munchausen,
+    agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, munchausen=args.munchausen, distributional=args.distributional,
                  D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
                  FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform") #"normal"
     
