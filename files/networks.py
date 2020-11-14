@@ -364,9 +364,9 @@ class DeepIQN(nn.Module):
         batch_size = input.shape[0]
         xs = torch.cat((input, action), dim=1)
         x = torch.relu(self.head(xs))
-        xs = torch.cat((x, xs), dim=1)
-        x = torch.relu(self.ff_1(x))
-        xs = torch.cat((x, xs), dim=1)
+        x = torch.cat((x, xs), dim=1)
+        x = torch.relu(self.ff_1(x))   
+        x = torch.cat((x, xs), dim=1)
         x = torch.relu(self.ff_2(x))
 
         cos, taus = self.calc_cos(batch_size, num_tau) # cos shape (batch, num_tau, layer_size)
