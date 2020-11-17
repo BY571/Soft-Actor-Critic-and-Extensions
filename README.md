@@ -38,7 +38,7 @@ To see the options:
 -env, Environment name, default = Pendulum-v0
 -per, Adding Priorizied Experience Replay to the agent if set to 1, default = 0
 -munchausen, Adding Munchausen RL to the agent if set to 1, default = 0
--distr, --distributed, Using an IQN Critic network if set to 1, default = 0
+-dist, --distributional, Using a distributional IQN Critic network if set to 1, default = 0
 -d2rl, Uses Deep Actor and Deep Critic Networks if set to 1, default = 0
 -ere, Adding Emphasizing Recent Experience to the agent if set to 1, default = 0
 -info, Information or name of the run
