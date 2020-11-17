@@ -11,7 +11,7 @@ This repository includes the newest Soft-Actor-Critic version ([Paper 2019](http
 In the paper implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
 
 #### TODO:
-- add IQN Critic [X] 
+- add IQN Critic [X] with IQN critic its 10x slower... need to fix that  
 - adding D2DRL IQN Critic [ ]
 - create distributed SAC version with ray [ ]
 - Check performance with all add-ons [  ]
@@ -20,7 +20,7 @@ In the paper implementation of ERE the authors used and older version of SAC, wh
 Trained and tested on:
 <pre>
 Python 3.6
-PyTorch 1.4.0  
+PyTorch 1.7.0  
 Numpy 1.15.2 
 gym 0.10.11 
 </pre>
@@ -38,6 +38,7 @@ To see the options:
 -env, Environment name, default = Pendulum-v0
 -per, Adding Priorizied Experience Replay to the agent if set to 1, default = 0
 -munchausen, Adding Munchausen RL to the agent if set to 1, default = 0
+-distr, --distributed, Using an IQN Critic network if set to 1, default = 0
 -d2rl, Uses Deep Actor and Deep Critic Networks if set to 1, default = 0
 -ere, Adding Emphasizing Recent Experience to the agent if set to 1, default = 0
 -info, Information or name of the run
