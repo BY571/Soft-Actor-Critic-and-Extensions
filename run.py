@@ -8,6 +8,14 @@ from torch.utils.tensorboard import SummaryWriter
 import argparse
 from  files import MultiPro
 from files.Agent import Agent
+import json
+
+def timer(start,end):
+    """ Helper to print training time """
+    hours, rem = divmod(end-start, 3600)
+    minutes, seconds = divmod(rem, 60)
+    print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+
 
 def evaluate(frame, eval_runs=5, capture=False, render=False):
     """
@@ -164,4 +172,11 @@ if __name__ == "__main__":
             worker=args.worker)
     t1 = time.time()
     eval_env.close()
-    print("training took {} min!".format((t1-t0)/60))
+    timer(t0, t1)
+
+    # save policy
+    torch.save(agent.actor_local.state_dict(), 'runs/'+args.info+".pth")
+
+    # save parameter
+    with open('runs/'+args.info+".json", 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
