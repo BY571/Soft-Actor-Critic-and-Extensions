@@ -15,6 +15,7 @@ class Agent():
                         action_size,
                         per,
                         ere,
+                        n_step,
                         munchausen,
                         distributional,
                         D2RL,
@@ -45,6 +46,7 @@ class Agent():
         self.device = device
         self.per = per
         self.ere = ere
+        self.n_step = n_step
         self.munchausen = munchausen
         self.distributional = distributional
         self.N = 32
@@ -124,13 +126,14 @@ class Agent():
             self.learn = self.learn_per
         else:
             self.per = 0
-            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, ere=ere)
+            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, n_step=n_step, ere=ere)
             if self.distributional:
                 self.learn = self.learn_distr
             else:
                 self.learn = self.learn_
         print("Using PER: {}".format(self.per))        
         print("Using Munchausen RL: {}".format(self.munchausen))
+        print("Using N-step size: {}".format(self.n_step))
 
 
 
@@ -186,9 +189,9 @@ class Agent():
             if not self.munchausen:
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
+                    Q_targets = rewards.cpu() + (gamma**self.n_step * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
                 else:
-                    Q_targets = rewards.cpu() + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
+                    Q_targets = rewards.cpu() + (gamma**self.n_step * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
             else:
                 mu_m, log_std_m = self.actor_local(states)
                 std = log_std_m.exp()
@@ -199,9 +202,9 @@ class Agent():
                 assert munchausen_reward.shape == (self.BATCH_SIZE, 1)
                 if self.FIXED_ALPHA == None:
                     # Compute Q targets for current states (y_i)
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
+                    Q_targets = munchausen_reward + (gamma**self.n_step * (1 - dones.cpu()) * (Q_target_next.cpu() - self.alpha * log_pis_next.cpu())) 
                 else:
-                    Q_targets = munchausen_reward + (gamma * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
+                    Q_targets = munchausen_reward + (gamma**self.n_step * (1 - dones.cpu()) * (Q_target_next.cpu() - self.FIXED_ALPHA * log_pis_next.cpu())) 
 
         # Compute critic loss
         Q_1 = self.critic1(states, actions).cpu()

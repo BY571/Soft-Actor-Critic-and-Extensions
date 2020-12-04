@@ -7,7 +7,7 @@ from collections import namedtuple, deque
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""
 
-    def __init__(self, buffer_size, batch_size, device, seed, gamma, ere=False):
+    def __init__(self, buffer_size, batch_size, device, seed, gamma, n_step=1, ere=False):
         """Initialize a ReplayBuffer object.
         Params
         ======
@@ -18,6 +18,8 @@ class ReplayBuffer:
         self.device = device
         self.memory = deque(maxlen=buffer_size)  
         self.batch_size = batch_size
+        self.n_step = n_step
+        self.n_step_buffer = deque(maxlen=self.n_step)
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
         self.gamma = gamma
@@ -26,8 +28,18 @@ class ReplayBuffer:
     
     def add(self, state, action, reward, next_state, done):
         """Add a new experience to memory."""
-        e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
+        self.n_step_buffer.append((state, action, reward, next_state, done))
+        if len(self.n_step_buffer) == self.n_step:
+            state, action, reward, next_state, done = self.calc_multistep_return(self.n_step_buffer)
+            e = self.experience(state, action, reward, next_state, done)
+            self.memory.append(e)
+
+    def calc_multistep_return(self, n_step_buffer):
+        Return = 0
+        for idx in range(self.n_step):
+            Return += self.gamma**idx * n_step_buffer[idx][2]
+        
+        return n_step_buffer[0][0], n_step_buffer[0][1], Return, n_step_buffer[-1][3], n_step_buffer[-1][4]
         
     
     
