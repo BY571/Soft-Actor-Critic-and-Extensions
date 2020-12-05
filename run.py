@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import gym
+import pybulletgym
 from collections import deque
 import torch
 import time
@@ -24,8 +25,11 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
 
     reward_batch = []
     for i in range(eval_runs):
+        if render:
+            print(render) 
+            eval_env.render(mode="human")
         state = eval_env.reset()
-        if render: eval_env.render()
+
         rewards = 0
         while True:
             action = agent.act(np.expand_dims(state, axis=0))
@@ -37,7 +41,7 @@ def evaluate(frame, eval_runs=5, capture=False, render=False):
         reward_batch.append(rewards)
     if capture == False:   
         writer.add_scalar("Reward", np.mean(reward_batch), frame)
-    return np.mean(reward_batch)
+
 
 
 def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
@@ -67,7 +71,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
     for frame in range(1, frames+1):
         # evaluation runs
         if frame % eval_every == 0 or frame == 1:
-            eval_reward = evaluate(frame*worker, eval_runs)
+            evaluate(frame*worker, eval_runs, render=args.render_evals)
 
         action = agent.act(state)
         action_v = np.clip(action*action_high, action_low, action_high)
@@ -102,7 +106,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
 
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("-env", type=str,default="Pendulum-v0", help="Environment name, default = Pendulum-v0")
+parser.add_argument("-env", type=str,default="HalfCheetahPyBulletEnv-v0", help="Environment name, default = Pendulum-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
@@ -124,6 +128,7 @@ parser.add_argument("-t", "--tau", type=float, default=1e-2, help="Softupdate fa
 parser.add_argument("-g", "--gamma", type=float, default=0.99, help="discount factor gamma, default is 0.99")
 parser.add_argument("--saved_model", type=str, default=None, help="Load a saved model to perform a test run!")
 parser.add_argument("-w", "--worker", type=int, default=1, help="Number of parallel worker, default = 1")
+parser.add_argument("--render_evals", type=int, default=0, choices=[0,1], help="Rendering the evaluation runs if set to 1, default=0")
 args = parser.parse_args()
 
 if __name__ == "__main__":
