@@ -11,7 +11,8 @@ import numpy as np
 class Agent():
     """Interacts with and learns from the environment."""
     
-    def __init__(self,  state_size,
+    def __init__(self,
+                        state_size,
                         action_size,
                         per,
                         ere,
@@ -30,7 +31,8 @@ class Agent():
                         tau,
                         worker,
                         device,
-                        action_prior="uniform"):
+                        action_prior="uniform",
+                        frames=1000000):
         """Initialize an Agent object.
         
         Params
@@ -122,11 +124,11 @@ class Agent():
 
         # Replay memory
         if self.per == 1:
-            self.memory = PrioritizedReplay(BUFFER_SIZE, self.BATCH_SIZE, self.device,  seed=random_seed, gamma=self.GAMMA, ere=ere)
+            self.memory = PrioritizedReplay(BUFFER_SIZE, self.BATCH_SIZE, self.device,  seed=random_seed, gamma=self.GAMMA, ere=ere,n_step=n_step, parallel_env=worker, beta_frames=frames)
             self.learn = self.learn_per
         else:
             self.per = 0
-            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, n_step=n_step, ere=ere)
+            self.memory = ReplayBuffer(BUFFER_SIZE, self.BATCH_SIZE, self.device, random_seed, self.GAMMA, n_step=n_step, parallel_env=worker, ere=ere)
             if self.distributional:
                 self.learn = self.learn_distr
             else:

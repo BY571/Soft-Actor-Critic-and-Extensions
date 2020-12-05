@@ -6,6 +6,7 @@ This repository includes the newest Soft-Actor-Critic version ([Paper 2019](http
 - **E**mphasizing **R**ecent **E**xperience without Forgetting the Past([ERE](https://arxiv.org/abs/1906.04009))
 - Munchausen Reinforcement Learning [Paper](https://arxiv.org/abs/2007.14430) 
 - D2RL: DEEP DENSE ARCHITECTURES IN REINFORCEMENT LEARNING [Paper](https://arxiv.org/pdf/2010.09163.pdf)
+- N-step Bootstrapping
 - Parallel Environments
 
 In the paper implementation of ERE the authors used and older version of SAC, whereas this repository contains the newest version of SAC as well as a Proportional Prioritization implementation of PER. 
@@ -14,7 +15,9 @@ In the paper implementation of ERE the authors used and older version of SAC, wh
 - add IQN Critic [X] with IQN critic its 10x slower... need to fix that  
 - adding D2DRL IQN Critic [ ]
 - create distributed SAC version with ray [ ]
+- added N-step bootstrapping [X]
 - Check performance with all add-ons [  ]
+- added pybulletgym
 
 #### Dependencies
 Trained and tested on:
@@ -23,6 +26,7 @@ Python 3.6
 PyTorch 1.7.0  
 Numpy 1.15.2 
 gym 0.10.11 
+pybulletgym
 </pre>
 
 ## How to use:
@@ -40,6 +44,7 @@ To see the options:
 -munchausen, Adding Munchausen RL to the agent if set to 1, default = 0
 -dist, --distributional, Using a distributional IQN Critic network if set to 1, default = 0
 -d2rl, Uses Deep Actor and Deep Critic Networks if set to 1, default = 0
+-n_step, Using n-step bootstrapping, default = 1
 -ere, Adding Emphasizing Recent Experience to the agent if set to 1, default = 0
 -info, Information or name of the run
 -frames, The amount of training interactions with the environment, default is 100000
