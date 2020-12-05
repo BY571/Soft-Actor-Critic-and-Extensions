@@ -106,7 +106,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
 
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("-env", type=str,default="HalfCheetahPyBulletEnv-v0", help="Environment name, default = Pendulum-v0")
+parser.add_argument("-env", type=str,default="Pendulum-v0", help="Environment name, default = Pendulum-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
     agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, n_step=args.n_step, munchausen=args.munchausen, distributional=args.distributional,
-                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
-                 FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform") #"normal"
+                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=worker*BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
+                 FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform", frames=frames) #"normal"
     
     t0 = time.time()
     if saved_model != None:
