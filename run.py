@@ -106,7 +106,7 @@ def run(frames=1000, eval_every=1000, eval_runs=5, worker=1):
 
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("-env", type=str,default="Pendulum-v0", help="Environment name, default = Pendulum-v0")
+parser.add_argument("-env", type=str,default="HalfCheetahPyBulletEnv-v0", help="Environment name, default = Pendulum-v0")
 parser.add_argument("-per", type=int, default=0, choices=[0,1], help="Adding Priorizied Experience Replay to the agent if set to 1, default = 0")
 parser.add_argument("-munchausen", type=int, default=0, choices=[0,1], help="Adding Munchausen RL to the agent if set to 1, default = 0")
 parser.add_argument("-dist", "--distributional", type=int, default=0, choices=[0,1], help="Using a distributional IQN Critic if set to 1, default=0")
@@ -114,7 +114,7 @@ parser.add_argument("-ere", type=int, default=0, choices=[0,1], help="Adding Emp
 parser.add_argument("-n_step", type=int, default=1, help="Using n-step bootstrapping, default=1")
 parser.add_argument("-info", type=str, help="Information or name of the run")
 parser.add_argument("-d2rl", type=int, choices=[0,1], default=0, help="Uses Deep Actor and Deep Critic Networks if set to 1 as described in the D2RL Paper: https://arxiv.org/pdf/2010.09163.pdf, default=0")
-parser.add_argument("-frames", type=int, default=10000, help="The amount of training interactions with the environment, default is 100000")
+parser.add_argument("-frames", type=int, default=200000, help="The amount of training interactions with the environment, default is 100000")
 parser.add_argument("-eval_every", type=int, default=1000, help="Number of interactions after which the evaluation runs are performed, default = 1000")
 parser.add_argument("-eval_runs", type=int, default=3, help="Number of evaluation runs performed, default = 1")
 parser.add_argument("-seed", type=int, default=0, help="Seed for the env and torch network weights, default is 0")
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     state_size = eval_env.observation_space.shape[0]
     action_size = eval_env.action_space.shape[0]
     agent = Agent(state_size=state_size, action_size=action_size, per=args.per, ere=args.ere, n_step=args.n_step, munchausen=args.munchausen, distributional=args.distributional,
-                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=worker*BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
+                 D2RL=D2RL, random_seed=seed, hidden_size=HIDDEN_SIZE, BATCH_SIZE=BATCH_SIZE, BUFFER_SIZE=BUFFER_SIZE, GAMMA=GAMMA,
                  FIXED_ALPHA=FIXED_ALPHA, lr_a=LR_ACTOR, lr_c=LR_CRITIC, tau=TAU, worker=worker, device=device,  action_prior="uniform", frames=frames) #"normal"
     
     t0 = time.time()
